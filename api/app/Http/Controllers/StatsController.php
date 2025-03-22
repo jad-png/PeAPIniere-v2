@@ -30,4 +30,16 @@ class StatsController extends Controller
 
         return $this->sendResponse("Popular plants.", $plants);
     }
+
+    public function plantsRepartition()
+    {
+        $plants = DB::table("categories")
+            ->leftJoin("plants", "plants.category_id", "categories.id")
+            ->select(DB::raw("COUNT(plants.category_id), categories.name"))
+            ->groupBy("categories.name")
+            ->orderBy("count", "desc")
+            ->get();
+
+        return $this->sendResponse("Plants repartition by category", $plants);
+    }
 }
