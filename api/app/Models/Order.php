@@ -11,6 +11,7 @@ class Order extends Model
     protected $fillable = [
         "status",
         "user_id",
+        "price_total"
     ];
 
     protected $attributes = [
