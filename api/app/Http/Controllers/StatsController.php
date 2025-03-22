@@ -17,4 +17,17 @@ class StatsController extends Controller
 
         return $this->sendResponse("Sales by orders", $sales);
     }
+
+    public function popularPlants()
+    {
+        $plants = DB::table("orders_plants")
+            ->join("plants", "plants.id", "orders_plants.plant_id")
+            ->select(DB::raw("plants.name, COUNT(orders_plants.plant_id)"))
+            ->groupBy("plants.id")
+            ->orderBy("count", "desc")
+            ->limit(10)
+            ->get();
+
+        return $this->sendResponse("Popular plants.", $plants);
+    }
 }
