@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderPlant;
+use App\Models\Plant;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +15,7 @@ class OrderController extends Controller
     // method to get all orders with thier plants
     public function index()
     {
-        return $this->sendResponse("Orders.", Order::with("plants")->get());
+        return $this->sendResponse("Orders.", OrderPlant::all());
     }
 
     // method to get the plants in an order
@@ -33,16 +34,21 @@ class OrderController extends Controller
         ]);
 
         $plants = $request->plants;
+        $priceTotal = 0;
 
         foreach ($plants as $plant) {
+            $plantItem = Plant::find($plant["plant_id"]);
             $order->plants()->attach(
                 $plant["plant_id"],
                 [
-                    "quantity" => $plant["quantity"]
+                    "quantity" => $plant["quantity"],
+                    "price_total" => $plantItem->price * $plant["quantity"],
                 ]
             );
+            $priceTotal += $plantItem->price * $plant["quantity"];
         }
 
+        $order->update(["price_total" => $priceTotal]);
         return $this->sendResponse("Order created succefully", $order, 201);
     }
 
