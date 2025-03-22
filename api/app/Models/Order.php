@@ -9,9 +9,12 @@ class Order extends Model
 {
     use HasFactory;
     protected $fillable = [
-        "quantity",
+        "status",
         "user_id",
-        "plant_id"
+    ];
+
+    protected $attributes = [
+        "status" => "pending"
     ];
 
     public function user()
@@ -19,8 +22,8 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function plant()
+    public function plants()
     {
-        return $this->belongsTo(Plant::class);
+        return $this->belongsToMany(Plant::class, "orders_plants");
     }
 }

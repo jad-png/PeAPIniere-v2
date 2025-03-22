@@ -13,10 +13,8 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->integer("quantity");
             $table->enum("status", ["pending", "in preparation", "delivred"])->default("pending");
             $table->foreignId("user_id")->constrained("users")->nullOnDelete();
-            $table->foreignId("plant_id")->constrained("plants")->nullOnDelete();
             $table->timestamps();
         });
     }
