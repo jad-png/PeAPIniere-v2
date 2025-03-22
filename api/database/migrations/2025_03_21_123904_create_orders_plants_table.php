@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId("order_id")->constrained("orders")->nullOnDelete();
             $table->primary(["plant_id", "order_id"]);
             $table->integer("quantity");
+            $table->decimal("price_total", 8, 2);
         });
     }
 
