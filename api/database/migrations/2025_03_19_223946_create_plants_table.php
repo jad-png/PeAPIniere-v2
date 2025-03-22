@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('plants', function (Blueprint $table) {
             $table->id();
             $table->string("name")->unique();
+            $table->string("slug")->unique();
             $table->text("description");
             $table->decimal("price", 8, 2);
             $table->string("image", 255);
