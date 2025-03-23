@@ -9,7 +9,7 @@ use App\Http\Controllers\PlantController;
 use App\Http\Controllers\StatsController;
 
 // auth routes
-Route::get('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post("/logout", [AuthController::class, 'logout'])->middleware("jwt.auth");
 Route::get("/profile", [AuthController::class, 'profile'])->middleware("jwt.auth");
