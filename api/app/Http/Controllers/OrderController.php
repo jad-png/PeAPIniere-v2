@@ -28,6 +28,7 @@ class OrderController extends Controller
     // method to make order by clients
     public function store(Request $request)
     {
+        $this->authorize("create");
         // create order with user_id and status = pending
         $order = Order::create([
             "user_id" => $request->attributes->get("jwt_payload")->sub
@@ -61,6 +62,7 @@ class OrderController extends Controller
     // method to update order status by employees
     public function update(Request $request, Order $order)
     {
+        $this->authorize("update", $order);
         try {
             $fields = $request->validate([
                 "status" => ["required"]
@@ -83,6 +85,7 @@ class OrderController extends Controller
     // method to delete order by admins or employees
     public function destroy(Order $order)
     {
+        $this->authorize("delete", $order);
         $order->delete();
         return $this->sendResponse("Order deleted.", []);
     }
@@ -90,6 +93,7 @@ class OrderController extends Controller
     // method to cancel order by its owner
     public function cancel(Request $request, Order $order)
     {
+        $this->authorize("delete", $order);
         if (!$order->status == "pending")
             return $this->sendError("Cannot update order status from now.", [], 403);
 
