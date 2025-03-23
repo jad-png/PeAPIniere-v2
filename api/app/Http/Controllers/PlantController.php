@@ -22,6 +22,7 @@ class PlantController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize("create");
         try {
             $fields = $request->validate([
                 "name" => ['required'],
@@ -56,6 +57,7 @@ class PlantController extends Controller
      */
     public function update(Request $request, Plant $plant)
     {
+        $this->authorize("update");
         try {
             $fields = $request->validate([
                 "name" => ['required'],
@@ -82,6 +84,7 @@ class PlantController extends Controller
      */
     public function destroy(Plant $plant)
     {
+        $this->authorize("delete");
         $plant->delete();
         return $this->sendResponse("Plant deleted succefully", []);
     }

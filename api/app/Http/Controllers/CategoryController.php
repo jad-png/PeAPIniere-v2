@@ -20,6 +20,7 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize("create");
         $fields = $request->validate([
             "name" => ['required'],
         ]);
@@ -44,6 +45,7 @@ class CategoryController extends Controller
      */
     public function update(Request $request, Category $category)
     {
+        $this->authorize("update");
         $fields = $request->validate([
             "name" => ['required'],
         ]);
@@ -60,6 +62,7 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
+        $this->authorize("delete");
         $category->delete();
         return response()->json(['message' => 'Category deleted succefully'], 204);
     }
