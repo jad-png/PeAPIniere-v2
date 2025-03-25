@@ -13,7 +13,7 @@ class OrderPolicy
      */
     public function view(User $user, Order $order): bool
     {
-        return false;
+        return $user->id === $order->user_id;
     }
 
     /**
