@@ -6,98 +6,97 @@ use App\Models\Order;
 use App\Models\OrderPlant;
 use App\Models\Plant;
 use App\Models\User;
+use App\Repositories\OrderRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
+    protected OrderRepository $orderRepository;
+
+    public function __construct(OrderRepository $orderRepository)
+    {
+        $this->orderRepository = $orderRepository;
+    }
+
     // method to get all orders with thier plants
     public function index()
     {
-        return $this->sendResponse("Orders.", OrderPlant::all());
+        $orders = $this->orderRepository->all();
+        return $this->sendResponse("Orders.", $orders);
     }
 
     // method to get the plants in an order
-    public function plantsOrder(Request $request, Order $order)
+    public function plantsOrder(Order $order)
     {
-        $plants = Order::with("plants")->find($order->id);
+        $plants = $this->orderRepository->plantsOrder($order);
         return $this->sendResponse("Plants belong to order $order->id.", $plants->plants);
     }
 
     // method to make order by clients
     public function store(Request $request)
     {
-        $this->authorize("create");
-        // create order with user_id and status = pending
-        $order = Order::create([
-            "user_id" => $request->attributes->get("jwt_payload")->sub
-        ]);
-
-        $plants = $request->plants;
-        $priceTotal = 0;
-
-        foreach ($plants as $plant) {
-            $plantItem = Plant::find($plant["plant_id"]);
-            $order->plants()->attach(
-                $plant["plant_id"],
-                [
-                    "quantity" => $plant["quantity"],
-                    "price_total" => $plantItem->price * $plant["quantity"],
-                ]
-            );
-            $priceTotal += $plantItem->price * $plant["quantity"];
+        $user = User::find($request->attributes->get("jwt_payload")->sub);
+        if (Gate::forUser($user)->allows('create', Order::class)) {
+            $order = $this->orderRepository->create($request);
+        } else {
+            abort(403, 'Unauthorized');
         }
-
-        $order->update(["price_total" => $priceTotal]);
         return $this->sendResponse("Order created succefully", $order, 201);
     }
 
     // show the details of the order to its owner
-    public function show(Order $order)
+    public function show(Request $request, Order $order)
     {
-        return $this->sendResponse("Order $order->id.", $order->plants);
+        $user = User::find($request->attributes->get("jwt_payload")->sub);
+        if (Gate::forUser($user)->allows('view', $order, Order::class)) {
+            $order = $this->orderRepository->find($order);
+        } else {
+            abort(403, 'Unauthorized');
+        }
+
+        if (!$order) return $this->sendError("Order not found");
+        return $this->sendResponse("Order.", $order);
     }
 
     // method to update order status by employees
     public function update(Request $request, Order $order)
     {
-        $this->authorize("update", $order);
-        try {
-            $fields = $request->validate([
-                "status" => ["required"]
-            ]);
-        } catch (ValidationException $e) {
-            return $this->sendError("Validation errors", $e->errors(), 422);
+        $user = User::find($request->attributes->get("jwt_payload")->sub);
+        if (Gate::forUser($user)->allows('update', $order, Order::class)) {
+            $order = $this->orderRepository->update($request, $order);
+        } else {
+            abort(403, 'Unauthorized');
         }
-
-        if ($fields["status"] != "in preparation" && $fields["status"] !== "delivred")
-            return $this->sendError("Status not approuved", [], 400);
-
-        if ($order->status == "delivred")
-            return $this->sendError("Cannot update order status after delevring.", [], 400);
-
-        $order->update($fields);
-
-        return $this->sendResponse("Order status updated succesfully to '$fields[status]'.", []);
+        if (!$order) return $this->sendError("Cannot update order status, check if the status provided valid or order not delivred yet.");
+        return $this->sendResponse("Order updated succefully", $order, 201);
     }
 
     // method to delete order by admins or employees
-    public function destroy(Order $order)
+    public function destroy(Request $request, Order $order)
     {
-        $this->authorize("delete", $order);
-        $order->delete();
-        return $this->sendResponse("Order deleted.", []);
+        $user = User::find($request->attributes->get("jwt_payload")->sub);
+        if (Gate::forUser($user)->allows('forceDelete', Order::class)) {
+            $orderDeleted = $this->orderRepository->delete($order);
+        } else {
+            abort(403, 'Unauthorized');
+        }
+        if ($orderDeleted) return $this->sendResponse("Order deleted.", []);
+        else return $this->sendError("Order wont't be deleted, try again.", [], 400);
     }
 
     // method to cancel order by its owner
     public function cancel(Request $request, Order $order)
     {
-        $this->authorize("delete", $order);
-        if (!$order->status == "pending")
-            return $this->sendError("Cannot update order status from now.", [], 403);
-
-        $order->delete();
-        return $this->sendResponse("Order cancelled.", [], 200);
+        $user = User::find($request->attributes->get("jwt_payload")->sub);
+        if (Gate::forUser($user)->allows('delete', $order, Order::class)) {
+            $orderCanceled = $this->orderRepository->cancel($order);
+        } else {
+            abort(403, 'Unauthorized');
+        }
+        if ($orderCanceled) return $this->sendResponse("Order canceled.", []);
+        else return $this->sendError("Order wont't be canceled, try again.", [], 400);
     }
 }
