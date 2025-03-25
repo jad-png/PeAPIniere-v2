@@ -4,11 +4,10 @@ namespace App\Providers;
 
 use App\DAOs\CategoryDAO;
 use App\DAOs\Interfaces\CategoryInterface;
-use App\Models\Category;
+use App\DAOs\PlantDAO;
+use App\DAOs\Interfaces\PlantInterface;
 use App\Models\Plant;
-use App\Policies\CategoryPolicy;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +18,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(CategoryInterface::class, CategoryDAO::class);
+        $this->app->bind(PlantInterface::class, PlantDAO::class);
     }
 
     /**
