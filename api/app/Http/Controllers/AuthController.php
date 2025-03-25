@@ -3,75 +3,62 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Services\JwtService;
+use App\Repositories\AuthRepository;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    protected $jwtService;
+    protected AuthRepository $authRepository;
 
-    public function __construct(JwtService $jwtService)
+    public function __construct(AuthRepository $authRepository)
     {
-        $this->jwtService = $jwtService;
+        $this->authRepository = $authRepository;
     }
 
     public function register(Request $request)
     {
-        $fields = $request->validate([
-            "fullname" => ['required', 'max:100'],
-            "email" => ['required', 'email', 'max:255', 'unique:users'],
-            "password" => ['required', 'confirmed']
-        ]);
+        try {
+            $fields = $request->validate([
+                "fullname" => ['required', 'max:100'],
+                "email" => ['required', 'email', 'max:255', 'unique:users'],
+                "password" => ['required', 'confirmed']
+            ]);
+        } catch (ValidationException $e) {
+            return $this->sendError("Validation errors", $e->errors(), 422);
+        }
 
-        $user = User::create($fields);
-        return $this->sendResponse('Registred succesfully', $user, 201);
+        $user = $this->authRepository->register($fields);
+
+        if (!$user) return $this->sendError("Registration failed.");
+        else return $this->sendResponse('Registred succesfully.', $user, 201);
     }
 
     public function login(Request $request)
     {
-        $request->validate([
-            "email" => ['required'],
-            "password" => ['required'],
-        ]);
-
-        $user = User::where('email', $request->email)->first();
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return $this->sendError("Email or password incorrect");
+        try {
+            $fields = $request->validate([
+                "email" => ['required'],
+                "password" => ['required'],
+            ]);
+        } catch (ValidationException $e) {
+            return $this->sendError("Validation errors", $e->errors(), 422);
         }
 
-        $payload = [
-            'sub' => $user->id,
-            'role' => $user->role_id,
-            'iat' => now()->timestamp,
-            'exp' => now()->addMinutes(30)->timestamp
-        ];
-        $token = $this->jwtService->generateToken($payload);
-        $cookie = Cookie::make("jwttoken", $token, 60);
-
-        return $this->sendResponse("Logged in succesfully.", ["token" => $token])->cookie($cookie);
+        $user = $this->authRepository->login($fields);
+        if (!$user) return $this->sendError("Credentials incorrects.");
+        if ($user["token"] && $user["cookie"])
+            return $this->sendResponse("Logged in succefully.", $user["token"])->cookie($user["cookie"]);
     }
 
-    public function logout(Request $request)
+    public function logout()
     {
-        return response()->json(['message' => "You are logged out."], 200)->cookie("jwttoken", '', 0);
+        return $this->sendResponse("Logged out.", [], 200)->cookie("jwttoken", "", 0);
     }
 
     public function profile(Request $request)
     {
-        $payload = $request->attributes->get("jwt_payload");
-
-        if (!$payload || !$payload->sub)
-            return $this->sendError("Unauthorized", [], 401);
-
-        $user = User::find($payload->sub);;
-
-        $data = [
-            "user" => $user
-        ];
-
-        return $this->sendResponse("", $data);
+        $user = $this->authRepository->profile($request);
+        return $this->sendResponse("Profile details.", $user);
     }
 }

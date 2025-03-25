@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\DAOs\AuthDAO;
 use App\DAOs\CategoryDAO;
+use App\DAOs\Interfaces\AuthInterface;
 use App\DAOs\Interfaces\CategoryInterface;
 use App\DAOs\PlantDAO;
 use App\DAOs\Interfaces\PlantInterface;
@@ -19,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(CategoryInterface::class, CategoryDAO::class);
         $this->app->bind(PlantInterface::class, PlantDAO::class);
+        $this->app->bind(AuthInterface::class, AuthDAO::class);
     }
 
     /**
