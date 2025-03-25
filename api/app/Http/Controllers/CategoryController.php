@@ -3,33 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\User;
+use App\Repositories\CategoryRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class CategoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    protected CategoryRepository $categoryRepository;
+
+    public function __construct(categoryRepository $categoryRepository)
     {
-        return $this->sendResponse("All categories.", Category::all());
+        $this->middleware('jwt.auth')->only(["store", "update", "destroy"]);
+        $this->categoryRepository = $categoryRepository;
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function index()
+    {
+        $categories = $this->categoryRepository->all();
+        return $this->sendResponse("Categories.", $categories);
+    }
+
     public function store(Request $request)
     {
-        $this->authorize("create");
-        $fields = $request->validate([
-            "name" => ['required'],
-        ]);
+        $user = User::find($request->attributes->get("jwt_payload")->sub);
+        if (Gate::forUser($user)->allows('create', Category::class)) {
+            $fields = $request->validate([
+                "name" => ['required'],
+            ]);
 
-        $categoryExist = Category::where("name", $fields["name"])->first();
-        if ($categoryExist) return $this->sendError("Category already ". $categoryExist->name ." exist with this name", [], 422);
-
-        $category = Category::create($fields);
-        return $this->sendResponse("Category created succesfully", $category, 201);
+            $category = $this->categoryRepository->create($fields);
+            return $this->sendResponse("category created.", $category, 201);
+        } else {
+            abort(403, 'Unauthorized');
+        }
     }
 
     /**
@@ -37,7 +44,9 @@ class CategoryController extends Controller
      */
     public function show(Category $category)
     {
-        return response()->json(['category' => $category], 200);
+        $categoryExist = $this->categoryRepository->find($category->id);
+        if (!$categoryExist) return $this->sendError("Category not found.");
+        else return $this->sendResponse("Category.", $categoryExist);
     }
 
     /**
@@ -45,25 +54,32 @@ class CategoryController extends Controller
      */
     public function update(Request $request, Category $category)
     {
-        $this->authorize("update");
-        $fields = $request->validate([
-            "name" => ['required'],
-        ]);
+        $user = User::find($request->attributes->get("jwt_payload")->sub);
+        if (Gate::forUser($user)->allows('update', Category::class)) {
+            $fields = $request->validate([
+                "name" => ['required'],
+            ]);
 
-        $categoryExist = Category::where("name", $fields["name"])->first();
-        if ($categoryExist) return $this->sendError("Category already exist with this name", [], 422);
-
-        $category->update($fields);
-        return $this->sendResponse("Category updated succefully", $category, 200);
+            $category = $this->categoryRepository->update($category->id, $fields);
+            if (!$category) return $this->sendError("Something went wrong while updating");
+            else return $this->sendResponse("category updated.", $category, 201);
+        } else {
+            abort(403, 'Unauthorized');
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Category $category)
+    public function destroy(Request $request, Category $category)
     {
-        $this->authorize("delete");
-        $category->delete();
-        return response()->json(['message' => 'Category deleted succefully'], 204);
+        $user = User::find($request->attributes->get("jwt_payload")->sub);
+        if (Gate::forUser($user)->allows('delete', Category::class)) {
+            $categoryDeleted = $this->categoryRepository->delete($category->id);
+            if (!$categoryDeleted) return $this->sendError("Category not deleted.");
+            else return response()->json(['message' => 'Category deleted'], 200);
+        } else {
+            abort(403, 'Unauthorized');
+        }
     }
 }

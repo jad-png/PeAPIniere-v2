@@ -27,7 +27,7 @@ class PlantPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Plant $plant): bool
+    public function update(User $user): bool
     {
         return $user->role_id === 1;
     }
@@ -35,7 +35,7 @@ class PlantPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Plant $plant): bool
+    public function delete(User $user): bool
     {
         return $user->role_id === 1;
     }

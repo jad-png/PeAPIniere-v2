@@ -4,17 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Plant;
+use App\Models\User;
+use App\Repositories\PlantRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class PlantController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    protected PlantRepository $plantRepository;
+
+    public function __construct(PlantRepository $plantRepository)
+    {
+        $this->middleware('jwt.auth')->only(["store", "update", "destroy"]);
+        $this->plantRepository = $plantRepository;
+    }
+
     public function index()
     {
-        return $this->sendResponse("All plants.", Plant::all());
+        $plants = $this->plantRepository->all();
+        return $this->sendResponse("All plants.", $plants);
     }
 
     /**
@@ -22,26 +31,26 @@ class PlantController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize("create");
-        try {
-            $fields = $request->validate([
-                "name" => ['required'],
-                "description" => ['required'],
-                "image" => ['required'],
-                "price" => ['required', 'numeric', 'min:10'],
-                "category_id" => ['required']
-            ]);
-        } catch (ValidationException $e) {
-            return $this->sendError("Validation errors", $e->errors(), 422);
-        }
+        $user = User::find($request->attributes->get("jwt_payload")->sub);
+        if (Gate::forUser($user)->allows('create', Plant::class)) {
+            try {
+                $fields = $request->validate([
+                    "name" => ['required'],
+                    "description" => ['required'],
+                    "image" => ['required'],
+                    "price" => ['required', 'numeric', 'min:10'],
+                    "category_id" => ['required']
+                ]);
+            } catch (ValidationException $e) {
+                return $this->sendError("Validation errors", $e->errors(), 422);
+            }
 
-        $category = Category::find($fields["category_id"]);
-        if (!$category) {
-            return $this->sendError("Category ID " . $fields["category_id"] . " does not exists", [], 404);
+            $plant = $this->plantRepository->create($fields);
+            if (!$plant) return $this->sendError("Plant won't be created, check the category if it exist in your database.");
+            else return response()->json(['plant' => $plant], 201);
+        } else {
+            abort(403, 'Unauthorized');
         }
-
-        $plant = Plant::create($fields);
-        return response()->json(['plant' => $plant], 201);
     }
 
     /**
@@ -49,7 +58,7 @@ class PlantController extends Controller
      */
     public function show(Plant $plant)
     {
-        return response()->json(['Plant' => $plant], 200);
+        return $this->plantRepository->find($plant->slug);
     }
 
     /**
@@ -57,35 +66,40 @@ class PlantController extends Controller
      */
     public function update(Request $request, Plant $plant)
     {
-        $this->authorize("update");
-        try {
-            $fields = $request->validate([
-                "name" => ['required'],
-                "description" => ['required'],
-                "image" => ['required'],
-                "price" => ['required', 'numeric', 'min:10'],
-                "category_id" => ['required']
-            ]);
-        } catch (ValidationException $e) {
-            return $this->sendError("Validation errors", $e->errors(), 422);
-        }
+        $user = User::find($request->attributes->get("jwt_payload")->sub);
+        if (Gate::forUser($user)->allows('update', Plant::class)) {
+            try {
+                $fields = $request->validate([
+                    "name" => ['required'],
+                    "description" => ['required'],
+                    "image" => ['required'],
+                    "price" => ['required', 'numeric', 'min:10'],
+                    "category_id" => ['required']
+                ]);
+            } catch (ValidationException $e) {
+                return $this->sendError("Validation errors", $e->errors(), 422);
+            }
 
-        $category = Category::find($fields["category_id"]);
-        if (!$category) {
-            return $this->sendError("Category ID " . $fields["category_id"] . " does not exists", [], 404);
+            $plant = $this->plantRepository->update($plant->id, $fields);
+            if (!$plant) return $this->sendError("Plant won't be updated, check the category if it exist in your database.");
+            else return response()->json(['plant' => $plant], 201);
+        } else {
+            abort(403, 'Unauthorized');
         }
-
-        $plant->update($fields);
-        return $this->sendResponse("Plant updated succefully", $plant, 200);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Plant $plant)
+    public function destroy(Request $request, Plant $plant)
     {
-        $this->authorize("delete");
-        $plant->delete();
-        return $this->sendResponse("Plant deleted succefully", []);
+        $user = User::find($request->attributes->get("jwt_payload")->sub);
+        if (Gate::forUser($user)->allows('delete', Category::class)) {
+            $plantDeleted = $this->plantRepository->delete($plant->id);
+            if (!$plantDeleted) return $this->sendError("Plant not deleted.");
+            else return $this->sendResponse("Plant deleted succefully", []);
+        } else {
+            abort(403, 'Unauthorized');
+        }
     }
 }
