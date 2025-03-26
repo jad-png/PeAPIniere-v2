@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\DTOs\LoginDTO;
+use App\DTOs\RegisterDTO;
 use App\Models\User;
 use App\Repositories\AuthRepository;
 use Illuminate\Http\Request;
@@ -19,36 +21,31 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         try {
-            $fields = $request->validate([
-                "fullname" => ['required', 'max:100'],
-                "email" => ['required', 'email', 'max:255', 'unique:users'],
-                "password" => ['required', 'confirmed']
-            ]);
+            $dto = RegisterDTO::fromRequest($request->all());
+            $user = $this->authRepository->register($dto->toArray());
+
+            if (!$user) return $this->sendError("Registration failed.");
+            else return $this->sendResponse('Registred succesfully.', $user, 201);
         } catch (ValidationException $e) {
             return $this->sendError("Validation errors", $e->errors(), 422);
         }
-
-        $user = $this->authRepository->register($fields);
-
-        if (!$user) return $this->sendError("Registration failed.");
-        else return $this->sendResponse('Registred succesfully.', $user, 201);
     }
 
     public function login(Request $request)
     {
         try {
-            $fields = $request->validate([
-                "email" => ['required'],
-                "password" => ['required'],
-            ]);
+            $dto = LoginDTO::fromRequest($request->all());
+            $user = $this->authRepository->login($dto->toArray());
+
+            if (!$user) return $this->sendError("Credentials incorrects.");
+
+            if ($user["token"] && $user["cookie"]) {
+                return $this->sendResponse("Logged in successfully.", $user["token"])
+                    ->cookie($user["cookie"]);
+            }
         } catch (ValidationException $e) {
             return $this->sendError("Validation errors", $e->errors(), 422);
         }
-
-        $user = $this->authRepository->login($fields);
-        if (!$user) return $this->sendError("Credentials incorrects.");
-        if ($user["token"] && $user["cookie"])
-            return $this->sendResponse("Logged in succefully.", $user["token"])->cookie($user["cookie"]);
     }
 
     public function logout()
