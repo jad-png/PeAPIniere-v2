@@ -20,6 +20,28 @@ class PlantController extends Controller
         $this->plantRepository = $plantRepository;
     }
 
+    /**
+     * @OA\Get(
+     *     path="/plants",
+     *     tags={"Plants"},
+     *     summary="Get all plants",
+     *     operationId="getPlants",
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="All plants"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/Plant")
+     *             ),
+     *             @OA\Property(property="status", type="integer", example=200)
+     *         )
+     *     )
+     * )
+     */
     public function index()
     {
         $plants = $this->plantRepository->all();
@@ -27,7 +49,45 @@ class PlantController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * @OA\Post(
+     *     path="/plants",
+     *     tags={"Plants"},
+     *     summary="Create a new plant",
+     *     operationId="createPlant",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/PlantRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Plant created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="plant", ref="#/components/schemas/Plant")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation errors"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 example={"name": {"The name field is required."}}
+     *             ),
+     *             @OA\Property(property="status", type="integer", example=422)
+     *         )
+     *     )
+     * )
      */
     public function store(Request $request)
     {
@@ -54,7 +114,30 @@ class PlantController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * @OA\Get(
+     *     path="/plants/{slug}",
+     *     tags={"Plants"},
+     *     summary="Get specific plant by slug",
+     *     operationId="getPlant",
+     *     @OA\Parameter(
+     *         name="slug",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(ref="#/components/schemas/Plant")
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Plant not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Plant not found")
+     *         )
+     *     )
+     * )
      */
     public function show(Plant $plant)
     {
@@ -62,7 +145,51 @@ class PlantController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * @OA\Put(
+     *     path="/plants/{id}",
+     *     tags={"Plants"},
+     *     summary="Update a plant",
+     *     operationId="updatePlant",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/PlantRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Plant updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="plant", ref="#/components/schemas/Plant")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation errors"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 example={"name": {"The name field is required."}}
+     *             ),
+     *             @OA\Property(property="status", type="integer", example=422)
+     *         )
+     *     )
+     * )
      */
     public function update(Request $request, Plant $plant)
     {
@@ -89,7 +216,36 @@ class PlantController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * @OA\Delete(
+     *     path="/plants/{id}",
+     *     tags={"Plants"},
+     *     summary="Delete a plant",
+     *     operationId="deletePlant",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Plant deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Plant deleted successfully"),
+     *             @OA\Property(property="data", type="array", @OA\Items()),
+     *             @OA\Property(property="status", type="integer", example=200)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized")
+     *         )
+     *     )
+     * )
      */
     public function destroy(Request $request, Plant $plant)
     {
