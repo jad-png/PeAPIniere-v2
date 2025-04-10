@@ -1,71 +1,48 @@
-import { useState } from "react";
-
-const orders = [
-  {
-    id: "CMD-2023-1254",
-    customer: "Ahmed Benali",
-    date: "2023-04-08",
-    amount: 1250,
-    status: "completed",
-  },
-  {
-    id: "CMD-2023-1253",
-    customer: "Fatima Zahra",
-    date: "2023-04-07",
-    amount: 850,
-    status: "processing",
-  },
-  {
-    id: "CMD-2023-1252",
-    customer: "Karim Idrissi",
-    date: "2023-04-07",
-    amount: 2100,
-    status: "completed",
-  },
-  {
-    id: "CMD-2023-1251",
-    customer: "Nadia Tazi",
-    date: "2023-04-06",
-    amount: 450,
-    status: "completed",
-  },
-  {
-    id: "CMD-2023-1250",
-    customer: "Youssef Alami",
-    date: "2023-04-05",
-    amount: 1800,
-    status: "cancelled",
-  },
-  {
-    id: "CMD-2023-1249",
-    customer: "Samira Bennani",
-    date: "2023-04-05",
-    amount: 750,
-    status: "processing",
-  },
-  {
-    id: "CMD-2023-1248",
-    customer: "Omar Chraibi",
-    date: "2023-04-04",
-    amount: 1350,
-    status: "completed",
-  },
-  {
-    id: "CMD-2023-1247",
-    customer: "Leila Mansouri",
-    date: "2023-04-03",
-    amount: 920,
-    status: "completed",
-  },
-];
+import { useState, useEffect } from "react";
+import axios from "axios";
+import useAuthStore from "../../store/useAuthStore";
 
 export default function DashboardOrders() {
-  const [filter, setFilter] = useState("all");
+  const { user } = useAuthStore();
+  // const [filter, setFilter] = useState("all");
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const filteredOrders =
-    filter === "all"
-      ? orders
-      : orders.filter((order) => order.status === filter);
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get("/api/orders", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        // Handle different API response structures
+        const rawData = response.data.data || response.data;
+        const ordersData = Array.isArray(rawData) ? rawData : [];
+
+        setOrders(ordersData);
+      } catch (err) {
+        console.error("Order fetch error:", {
+          status: err.response?.status,
+          data: err.response?.data,
+          message: err.message,
+        });
+        setError(err.response?.data?.message || "Erreur de chargement");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  // const filteredOrders =
+  //   filter === "all"
+  //     ? orders
+  //     : orders.filter((order) => order.status === filter);
 
   const getStatusClass = (status) => {
     switch (status) {
@@ -75,6 +52,10 @@ export default function DashboardOrders() {
         return "bg-blue-100 text-blue-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
+      case "delivred": // Added to match your database schema
+        return "bg-purple-100 text-purple-800";
+      case "pending": // Added to match your database schema
+        return "bg-yellow-100 text-yellow-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -88,16 +69,42 @@ export default function DashboardOrders() {
         return "En traitement";
       case "cancelled":
         return "Annulée";
+      case "delivred": // Added to match your database schema
+        return "Livrée";
+      case "pending": // Added to match your database schema
+        return "En attente";
+      case "in preparation": // Added to match your database schema
+        return "En préparation";
       default:
         return status;
     }
   };
 
+  if (loading) {
+    return (
+      <section className="bg-white p-4">
+        <div className="flex justify-center items-center h-64">
+          <p>Chargement des commandes...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="bg-white p-4">
+        <div className="flex justify-center items-center h-64 text-red-500">
+          <p>{error}</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="bg-white p-4">
       <div className="flex flex-wrap items-center justify-between mb-6">
         <h2 className="text-xl font-semibold">Commandes Récentes</h2>
-        <div className="flex space-x-2 mt-2 sm:mt-0">
+        {/* <div className="flex space-x-2 mt-2 sm:mt-0">
           <button
             className={`px-3 py-1 text-sm rounded-md ${
               filter === "all"
@@ -138,7 +145,7 @@ export default function DashboardOrders() {
           >
             Annulées
           </button>
-        </div>
+        </div> */}
       </div>
 
       <div className="overflow-x-auto">
@@ -160,58 +167,40 @@ export default function DashboardOrders() {
               <th className="py-2 text-right text-sm font-medium text-gray-500">
                 Statut
               </th>
-              <th className="py-2 text-right text-sm font-medium text-gray-500">
-                Actions
-              </th>
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.map((order) => (
-              <tr key={order.id} className="border-b border-gray-200 text-xs">
-                <td className="py-3 font-medium">{order.id}</td>
-                <td className="py-3">{order.customer}</td>
-                <td className="py-3">
-                  {new Date(order.date).toLocaleDateString("fr-FR")}
-                </td>
-                <td className="py-3 text-right font-medium">
-                  {order.amount} MAD
-                </td>
-                <td className="py-3 text-right">
-                  <span
-                    className={`px-2 py-1 text-xs rounded-full ${getStatusClass(
-                      order.status
-                    )}`}
-                  >
-                    {getStatusText(order.status)}
-                  </span>
-                </td>
-                <td className="py-3 text-right">
-                  <button className="text-gray-500 hover:text-green-600">
-                    <span className="sr-only">Voir</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+            {orders.length > 0 ? (
+              orders.map((order) => (
+                <tr key={order.id} className="border-b border-gray-200 text-xs">
+                  <td className="py-3 font-medium">#{order.id}</td>
+                  <td className="py-3">
+                    {order.user?.fullname || "Client inconnu"}
+                  </td>
+                  <td className="py-3">
+                    {new Date(order.created_at).toLocaleDateString("fr-FR")}
+                  </td>
+                  <td className="py-3 text-right font-medium">
+                    {order.price_total} MAD
+                  </td>
+                  <td className="py-3 text-right">
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${getStatusClass(
+                        order.status
+                      )}`}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
-                    </svg>
-                  </button>
+                      {getStatusText(order.status)}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="py-4 text-center text-gray-500">
+                  Aucune commande trouvée
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
