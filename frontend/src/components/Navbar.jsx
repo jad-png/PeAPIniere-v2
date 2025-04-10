@@ -6,9 +6,11 @@ import { IoCartOutline } from "react-icons/io5";
 import useAuthStore from "../store/useAuthStore.js";
 
 const Navbar = () => {
-  const { user } = useAuthStore();
-  console.log(user.data.user)
-
+  const { user, logout } = useAuthStore();
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    await logout();
+  };
   return (
     <nav className="h-8 w-full px-8 text-gray-600 sticky z-50 top-0 shadow-md bg-gray-50">
       <div className="container mx-auto flex justify-between h-full items-center">
@@ -45,14 +47,19 @@ const Navbar = () => {
             <span className="font-medium">
               {user ? user.data.user.fullname : "account"}
             </span>
-            <img src={assets.chevron_down} className="size-3" alt="" />
           </Link>
+          <div
+            className="flex items-center gap-1 hover:bg-gray-200 h-full px-2 cursor-pointer"
+            onClick={handleLogout}
+          >
+            <img src={assets.logout} className="size-5" alt="" />
+          </div>
+
           <Link
             to={"/cart"}
             className="flex items-center gap-1 hover:bg-gray-200 h-full px-2 cursor-pointer"
           >
             <IoCartOutline className="size-5" />
-            <span className="font-medium">Cart</span>
           </Link>
         </ul>
       </div>
