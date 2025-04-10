@@ -66,11 +66,10 @@ const LoginForm = () => {
             <button
               type="submit"
               className={`w-full p-2 font-medium rounded-md ${
-                true == true ? "bg-gray-700 text-white" : "bg-black text-white"
+                loading ? "bg-gray-700 text-white" : "bg-black text-white"
               }`}
             >
-              {/* {loading ? "Login in ..." : "Login"} */}
-              Login
+              {loading ? "Login in ..." : "Login"}
             </button>
             <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
               <span className="relative z-10 text-gray-500 bg-white px-2 text-xs">
