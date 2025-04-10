@@ -13,6 +13,7 @@ import Login from "./pages/auth/Login.jsx";
 import PrivateRoute from "./components/PrivateRoute.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import ProductDetail from "./pages/ProductDetail.jsx";
+import Register from "./pages/auth/Register.jsx";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -24,6 +25,7 @@ const router = createBrowserRouter(
       </Route>
 
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
     </Route>
   )
 );
