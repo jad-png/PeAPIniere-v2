@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import useAuthStore from "../../store/useAuthStore";
 
-export default function DashboardOrders() {
+const DashboardOrders = () => {
   const { user } = useAuthStore();
-  // const [filter, setFilter] = useState("all");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,11 +38,6 @@ export default function DashboardOrders() {
     fetchOrders();
   }, []);
 
-  // const filteredOrders =
-  //   filter === "all"
-  //     ? orders
-  //     : orders.filter((order) => order.status === filter);
-
   const getStatusClass = (status) => {
     switch (status) {
       case "completed":
@@ -52,9 +46,9 @@ export default function DashboardOrders() {
         return "bg-blue-100 text-blue-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
-      case "delivred": // Added to match your database schema
+      case "delivred":
         return "bg-purple-100 text-purple-800";
-      case "pending": // Added to match your database schema
+      case "pending":
         return "bg-yellow-100 text-yellow-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -69,11 +63,11 @@ export default function DashboardOrders() {
         return "En traitement";
       case "cancelled":
         return "Annulée";
-      case "delivred": // Added to match your database schema
+      case "delivred":
         return "Livrée";
-      case "pending": // Added to match your database schema
+      case "pending":
         return "En attente";
-      case "in preparation": // Added to match your database schema
+      case "in preparation":
         return "En préparation";
       default:
         return status;
@@ -104,48 +98,6 @@ export default function DashboardOrders() {
     <section className="bg-white p-4">
       <div className="flex flex-wrap items-center justify-between mb-6">
         <h2 className="text-xl font-semibold">Commandes Récentes</h2>
-        {/* <div className="flex space-x-2 mt-2 sm:mt-0">
-          <button
-            className={`px-3 py-1 text-sm rounded-md ${
-              filter === "all"
-                ? "bg-green-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
-            onClick={() => setFilter("all")}
-          >
-            Toutes
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded-md ${
-              filter === "completed"
-                ? "bg-green-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
-            onClick={() => setFilter("completed")}
-          >
-            Complétées
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded-md ${
-              filter === "processing"
-                ? "bg-green-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
-            onClick={() => setFilter("processing")}
-          >
-            En traitement
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded-md ${
-              filter === "cancelled"
-                ? "bg-green-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
-            onClick={() => setFilter("cancelled")}
-          >
-            Annulées
-          </button>
-        </div> */}
       </div>
 
       <div className="overflow-x-auto">
@@ -206,4 +158,6 @@ export default function DashboardOrders() {
       </div>
     </section>
   );
-}
+};
+
+export default DashboardOrders;
