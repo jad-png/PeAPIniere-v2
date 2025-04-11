@@ -1,6 +1,43 @@
-export default function CategoryDistributionCard({ data = [] }) {
-  const validData = Array.isArray(data) ? data : [];
+import { useEffect, useState } from "react";
+import axios from "axios";
+
+export default function CategoryDistributionCard() {
+  const [categoriesData, setCategoriesData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchCategoriesData = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get("/api/admin/plants-repartition");
+
+        // Vérification de la réponse
+        if (response.data.success && Array.isArray(response.data.data)) {
+          setCategoriesData(response.data.data);
+        } else {
+          throw new Error("Format de données invalide");
+        }
+      } catch (err) {
+        console.error("Erreur de récupération:", err);
+        setError(err.message);
+        setCategoriesData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategoriesData();
+  }, []);
+
+  // Préparation des données pour l'affichage
+  const validData = Array.isArray(categoriesData) ? categoriesData : [];
   const filteredData = validData.filter((cat) => (cat.count || 0) > 0);
+
+  if (loading)
+    return <div className="p-4 text-center">Chargement en cours...</div>;
+  if (error)
+    return <div className="p-4 text-red-500 text-center">Erreur: {error}</div>;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
