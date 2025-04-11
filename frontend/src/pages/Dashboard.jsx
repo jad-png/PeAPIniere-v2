@@ -10,7 +10,6 @@ import CategoryDistributionCard from "../components/dashboard/CategoryDistributi
 import { useState } from "react";
 
 const Dashboard = () => {
-  const [categoriesData, setCategoriesData] = useState([]);
 
   return (
     <>
@@ -31,7 +30,7 @@ const Dashboard = () => {
               </div>
 
               <div>
-                <CategoryDistributionCard data={categoriesData} />
+                <CategoryDistributionCard />
               </div>
             </div>
           </div>
