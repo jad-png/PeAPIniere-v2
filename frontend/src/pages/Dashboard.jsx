@@ -2,6 +2,7 @@ import DashboardStats from "../components/dashboard/DashboardStats";
 import DashboardCharts from "../components/dashboard/DashboardCharts";
 import DashboardProducts from "../components/dashboard/DashboardProducts";
 import DashboardOrders from "../components/dashboard/DashboardOrders";
+import PlantsList from "../components/PlantsList";
 
 const Dashboard = () => {
   return (
@@ -21,6 +22,10 @@ const Dashboard = () => {
 
           <section className="mt-8">
             <DashboardOrders />
+          </section>
+
+          <section className="mt-8">
+            <PlantsList />
           </section>
         </div>
       </main>
