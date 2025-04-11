@@ -41,7 +41,7 @@ export default function PlantsList() {
   return (
     <section className="bg-white p-4 rounded-lg shadow">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Liste des Plantes</h2>
+        <h2 className="text-xl font-semibold">Liste des Plantes</h2>
         {/* {user?.role_id === 1 && ( */}
         <button
           onClick={() => setIsModalOpen(true)}
@@ -54,7 +54,7 @@ export default function PlantsList() {
 
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white rounded-lg overflow-hidden text-xs">
-          <thead className="text-sm bg-gray-50">
+          <thead className="text-xs bg-gray-50">
             <tr>
               <th className="py-3 px-4 text-left font-medium text-gray-500">
                 ID
